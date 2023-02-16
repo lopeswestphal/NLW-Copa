@@ -83,13 +83,13 @@ export async function poolRoutes(fastify: FastifyInstance) {
             }
         })
 
-        if(!pool) {
+        if (!pool) {
             return reply.status(400).send({
                 message: 'Pool not found.'
             })
         }
 
-        if(pool.participants.length > 0) {
+        if (pool.participants.length > 0) {
             return reply.send(400).send({
                 message: 'You join in this pool.'
             })
@@ -120,17 +120,11 @@ export async function poolRoutes(fastify: FastifyInstance) {
         onRequest: [authenticate]
     }, async (request) => {
         const pools = await prisma.pool.findMany({
-            where: {
-                participants: {
-                    some: {
-                        userId: request.user.sub,
-                    }
-                }
-            },
             include: {
-                _count: {
+                owner: {
                     select: {
-                        participants: true,
+                        id: true,
+                        name: true,
                     }
                 },
                 participants: {
@@ -145,12 +139,18 @@ export async function poolRoutes(fastify: FastifyInstance) {
                     },
                     take: 4,
                 },
-                owner: {
+                _count: {
                     select: {
-                        id: true,
-                        name: true,
+                        participants: true,
                     }
-                },
+                }
+            },
+            where: {
+                participants: {
+                    some: {
+                        userId: request.user.sub,
+                    }
+                }
             }
         })
 
